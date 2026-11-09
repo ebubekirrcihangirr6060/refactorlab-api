@@ -75,7 +75,7 @@ Yollar `src/main/java/com/refactorlab/api/` altındadır.
 - [x] Security (HTTP Basic, Argon2id, roller, 401/403 JSON), Actuator, Swagger
 - [x] README, SQL scriptleri, Postman koleksiyonu
 - [x] Uçtan uca test (CRUD, 400/401/403/404, analiz, actuator, swagger — 9 Kasım geçti)
-- [ ] GitHub'a push + collaborator ekleme
+- [x] GitHub: https://github.com/ebubekirrcihangirr6060/refactorlab-api (GaziFe, Kadircelik-stack davetli)
 
 ## 5. Yeni geliştirici için hızlı başlangıç
 1. `README.md` adımlarını uygula (JDK 25, MySQL, `sql/01-create-user.sql`, `mvnw spring-boot:run`).
