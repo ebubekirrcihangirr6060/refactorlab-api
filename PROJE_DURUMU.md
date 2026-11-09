@@ -34,9 +34,9 @@ Yollar `src/main/java/com/refactorlab/api/` altındadır.
 | 1 | Spring Boot 4.1.2 | `pom.xml` (parent version) |
 | 2 | Spring Data JPA/REST yok | `dao/*DAOJpaImpl.java` — hepsi `EntityManager` |
 | 3 | Controller→Service→DAO | `rest/CodeSnippetRestController` → `service/CodeSnippetServiceImpl` → `dao/CodeSnippetDAOJpaImpl` |
-| 4 | @RestController | `rest/CodeSnippetRestController.java:29`, `rest/RefactoringRuleRestController.java` |
-| 5 | Service arayüz + @Service | `service/CodeSnippetService.java` + `CodeSnippetServiceImpl.java:23` |
-| 6 | Repository + @Repository + EntityManager | `dao/CodeSnippetDAOJpaImpl.java:12` |
+| 4 | @RestController | `rest/CodeSnippetRestController.java:28`, `rest/RefactoringRuleRestController.java` |
+| 5 | Service arayüz + @Service | `service/CodeSnippetService.java` + `CodeSnippetServiceImpl.java:22` |
+| 6 | Repository + @Repository + EntityManager | `dao/CodeSnippetDAOJpaImpl.java:11` |
 | 7 | Constructor injection | Her sınıfın constructor'ı (ör. `service/AnalysisServiceImpl.java:31-44`) |
 | 8 | @Configuration + @Bean | `config/AppConfig.java:11,15,22` (PasswordEncoder, RefactoringCatalog) |
 | 9 | @Lazy | `config/AppConfig.java:23` (bean) + `service/AnalysisServiceImpl.java:36` (enjeksiyon noktası). Konsolda ilk analizde "RefactoringCatalog constructor calisti" logu çıkar |
