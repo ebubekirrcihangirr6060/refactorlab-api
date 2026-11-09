@@ -74,7 +74,7 @@ Yollar `src/main/java/com/refactorlab/api/` altındadır.
 - [x] Proje iskeleti, entity, DAO, service, controller, hata yönetimi
 - [x] Security (HTTP Basic, Argon2id, roller, 401/403 JSON), Actuator, Swagger
 - [x] README, SQL scriptleri, Postman koleksiyonu
-- [ ] Uçtan uca test (MySQL'de `springstudent` kullanıcısı oluşturulduktan sonra)
+- [x] Uçtan uca test (CRUD, 400/401/403/404, analiz, actuator, swagger — 9 Kasım geçti)
 - [ ] GitHub'a push + collaborator ekleme
 
 ## 5. Yeni geliştirici için hızlı başlangıç
