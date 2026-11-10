@@ -34,29 +34,29 @@ Yollar `src/main/java/com/refactorlab/api/` altındadır.
 | 1 | Spring Boot 4.1.2 | `pom.xml` (parent version) |
 | 2 | Spring Data JPA/REST yok | `dao/*DAOJpaImpl.java` — hepsi `EntityManager` |
 | 3 | Controller→Service→DAO | `rest/CodeSnippetRestController` → `service/CodeSnippetServiceImpl` → `dao/CodeSnippetDAOJpaImpl` |
-| 4 | @RestController | `rest/CodeSnippetRestController.java:28`, `rest/RefactoringRuleRestController.java` |
-| 5 | Service arayüz + @Service | `service/CodeSnippetService.java` + `CodeSnippetServiceImpl.java:22` |
+| 4 | @RestController | `rest/CodeSnippetRestController.java:31`, `rest/RefactoringRuleRestController.java` |
+| 5 | Service arayüz + @Service | `service/CodeSnippetService.java` + `CodeSnippetServiceImpl.java:24` |
 | 6 | Repository + @Repository + EntityManager | `dao/CodeSnippetDAOJpaImpl.java:11` |
-| 7 | Constructor injection | Her sınıfın constructor'ı (ör. `service/AnalysisServiceImpl.java:31-44`) |
+| 7 | Constructor injection | Her sınıfın constructor'ı (ör. `service/AnalysisServiceImpl.java:33-45`) |
 | 8 | @Configuration + @Bean | `config/AppConfig.java:11,15,22` (PasswordEncoder, RefactoringCatalog) |
-| 9 | @Lazy | `config/AppConfig.java:23` (bean) + `service/AnalysisServiceImpl.java:36` (enjeksiyon noktası). Konsolda ilk analizde "RefactoringCatalog constructor calisti" logu çıkar |
+| 9 | @Lazy | `config/AppConfig.java:23` (bean) + `service/AnalysisServiceImpl.java:38` (enjeksiyon noktası). Konsolda ilk analizde "RefactoringCatalog constructor calisti" logu çıkar |
 | 10 | @PostConstruct / @PreDestroy | `common/RefactoringCatalog.java:25` / `:47` |
-| 11 | Çoklu impl + @Primary/@Qualifier | `common/JavaCodeSmellEngine.java:17` (@Primary), `common/SqlQuerySmellEngine.java:15` (@Qualifier), kullanımı `service/AnalysisServiceImpl.java:34-35` |
-| 12 | @Value → constructor parametresi | `service/CodeSnippetServiceImpl.java:41` (`refactorlab.analysis.max-code-length`, `application.properties`) |
+| 11 | Çoklu impl + @Primary/@Qualifier | `common/JavaCodeSmellEngine.java:17` (@Primary), `common/SqlQuerySmellEngine.java:15` (@Qualifier), kullanımı `service/AnalysisServiceImpl.java:36-37` |
+| 12 | @Value → constructor parametresi | `service/CodeSnippetServiceImpl.java:43` (`refactorlab.analysis.max-code-length`, `application.properties`) |
 | 13 | Actuator health + info | `application.properties` (`info.app.*`) → `/actuator/health`, `/actuator/info` |
 | 14 | Actuator koruması | `security/SecurityConfig.java` (`/actuator/**` → REVIEWER) |
 | 15 | MySQL kalıcı | `application.properties` (`ddl-auto=update`) |
 | 16 | @Entity @Table @Column, no-arg ctor, @Id @GeneratedValue(IDENTITY) | `entity/*.java` |
 | 17 | persist / find / JPQL liste / merge / remove | `dao/CodeSnippetDAOJpaImpl.java:24,30,36,52,58-60` |
 | 18 | Parametreli JPQL + setParameter | `dao/CodeSnippetDAOJpaImpl.java:42-45` (`findByLanguage`) |
-| 19 | @Transactional (Spring) Service'te | `service/CodeSnippetServiceImpl.java:69,81,93,110` |
-| 20 | GET liste + tek (@PathVariable) | `rest/CodeSnippetRestController.java:42,51` |
-| 21 | POST, id yok sayılır | `rest/CodeSnippetRestController.java:57-60` + `service/CodeSnippetServiceImpl.java:72` |
-| 22 | PUT tam güncelleme | `rest/CodeSnippetRestController.java:65` |
-| 23 | PATCH kısmi, id engelli | `rest/CodeSnippetRestController.java:71` → `service/CodeSnippetServiceImpl.java:95-102` (JsonMapper.updateValue) |
-| 24 | DELETE | `rest/CodeSnippetRestController.java:77` |
+| 19 | @Transactional (Spring) Service'te | `service/CodeSnippetServiceImpl.java:71,82,94,111` |
+| 20 | GET liste + tek (@PathVariable) | `rest/CodeSnippetRestController.java:45,54` |
+| 21 | POST, id yok sayılır | `rest/CodeSnippetRestController.java:63` (`setId(0)`) |
+| 22 | PUT tam güncelleme | `rest/CodeSnippetRestController.java:68` |
+| 23 | PATCH kısmi, id engelli | `rest/CodeSnippetRestController.java:74` → `service/CodeSnippetServiceImpl.java:96-103` (JsonMapper.updateValue) |
+| 24 | DELETE | `rest/CodeSnippetRestController.java:84` |
 | 25 | @RequestBody + Jackson | Controller metotları |
-| 26 | Global exception handler | `rest/RefactorLabRestExceptionHandler.java:16` |
+| 26 | Global exception handler | `rest/RefactorLabRestExceptionHandler.java:21` |
 | 27 | Custom exception + ortak JSON hata modeli | `rest/CodeSnippetNotFoundException`, `InvalidRequestException`, `RefactorLabErrorResponse` (status, message, timeStamp) |
 | 28 | 404 / 400 | `RefactorLabRestExceptionHandler` |
 | 29 | SecurityFilterChain + HTTP Basic | `security/SecurityConfig.java:31` |
@@ -76,6 +76,7 @@ Yollar `src/main/java/com/refactorlab/api/` altındadır.
 - [x] README, SQL scriptleri, Postman koleksiyonu
 - [x] Uçtan uca test (CRUD, 400/401/403/404, analiz, actuator, swagger — 9 Kasım geçti)
 - [x] GitHub: https://github.com/ebubekirrcihangirr6060/refactorlab-api (GaziFe, Kadircelik-stack davetli)
+- [x] Kod incelemesi (10 Kasım): prompt-injection yanlış pozitifi, catch-all 500, N+1/SQL motoru yanlış tespitleri, seed tekrarı, Swagger hata modeli + PATCH örneği düzeltildi
 
 ## 5. Yeni geliştirici için hızlı başlangıç
 1. `README.md` adımlarını uygula (JDK 25, MySQL, `sql/01-create-user.sql`, `mvnw spring-boot:run`).

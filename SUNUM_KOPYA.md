@@ -37,20 +37,20 @@ Postman  →  Controller (rest/)  →  Service (service/)  →  DAO (dao/)  → 
 
 | Hoca sorar | Ne söylersin (basitçe) | Açacağın dosya : satır |
 |---|---|---|
-| **@Lazy nerede?** | "Katalog uygulama açılırken değil, ilk analiz isteği gelince oluşturuluyor. Konsolda o anda log çıkıyor." | `config/AppConfig.java:23` ve `service/AnalysisServiceImpl.java:36` |
-| **@Primary / @Qualifier?** | "İki analiz motorumuz var: Java ve SQL. Varsayılan Java (`@Primary`). SQL motorunu ismiyle istiyoruz (`@Qualifier`)." | `common/JavaCodeSmellEngine.java:17`, `common/SqlQuerySmellEngine.java:15`, kullanım: `service/AnalysisServiceImpl.java:34-35` |
+| **@Lazy nerede?** | "Katalog uygulama açılırken değil, ilk analiz isteği gelince oluşturuluyor. Konsolda o anda log çıkıyor." | `config/AppConfig.java:23` ve `service/AnalysisServiceImpl.java:38` |
+| **@Primary / @Qualifier?** | "İki analiz motorumuz var: Java ve SQL. Varsayılan Java (`@Primary`). SQL motorunu ismiyle istiyoruz (`@Qualifier`)." | `common/JavaCodeSmellEngine.java:17`, `common/SqlQuerySmellEngine.java:15`, kullanım: `service/AnalysisServiceImpl.java:36-37` |
 | **@PostConstruct / @PreDestroy?** | "Katalog oluşunca 16 kaydı yüklüyor, uygulama kapanırken temizliyor." | `common/RefactoringCatalog.java:25` / `:47` |
 | **@Configuration + @Bean?** | "Şifreleyiciyi ve kataloğu burada kendimiz tanımladık." | `config/AppConfig.java:11, 15, 22` |
-| **@Value?** | "Maksimum kod uzunluğu (10000) ayar dosyasından okunuyor, constructor parametresi olarak geliyor." | `service/CodeSnippetServiceImpl.java:41` + `application.properties` |
-| **Constructor injection?** | "Hiçbir yerde `@Autowired` alan yok, her şey constructor ile geliyor." | Her sınıfın constructor'ı, örnek: `service/AnalysisServiceImpl.java:31-44` |
-| **@RestController?** | "İstekleri karşılayan sınıf." | `rest/CodeSnippetRestController.java:28` |
-| **@Service + @Transactional?** | "İş kuralları burada. Kaydetme/silme işlemleri transaction içinde." | `service/CodeSnippetServiceImpl.java:22` |
+| **@Value?** | "Maksimum kod uzunluğu (10000) ayar dosyasından okunuyor, constructor parametresi olarak geliyor." | `service/CodeSnippetServiceImpl.java:43` + `application.properties` |
+| **Constructor injection?** | "Hiçbir yerde `@Autowired` alan yok, her şey constructor ile geliyor." | Her sınıfın constructor'ı, örnek: `service/AnalysisServiceImpl.java:33-45` |
+| **@RestController?** | "İstekleri karşılayan sınıf." | `rest/CodeSnippetRestController.java:31` |
+| **@Service + @Transactional?** | "İş kuralları burada. Kaydetme/silme işlemleri transaction içinde." | `service/CodeSnippetServiceImpl.java:24` |
 | **@Repository + EntityManager?** | "Spring Data JPA kullanmadık, sorguları kendimiz yazdık." | `dao/CodeSnippetDAOJpaImpl.java:11` |
 | **persist / merge / remove?** | "Ekleme persist, güncelleme merge, silme remove." | `dao/CodeSnippetDAOJpaImpl.java:24, 52, 60` |
 | **Parametreli JPQL?** | "Dile göre filtreleme: `?language=SQL`" | `dao/CodeSnippetDAOJpaImpl.java:45` (`setParameter`) |
-| **POST'ta gelen id ne oluyor?** | "Yok sayıyoruz, `setId(0)` yapıyoruz. Böylece her POST'ta yeni kayıt oluşuyor." | `rest/CodeSnippetRestController.java:60` |
-| **PATCH nasıl çalışıyor?** | "Sadece gönderilen alanlar değişiyor. Gövdede `id` gönderilirse 400 dönüyoruz." | `service/CodeSnippetServiceImpl.java:95-102` (`updateValue`) |
-| **Hatalar nerede yakalanıyor?** | "Tek bir merkez sınıf bütün hataları aynı JSON formatına çeviriyor." | `rest/RefactorLabRestExceptionHandler.java:16` |
+| **POST'ta gelen id ne oluyor?** | "Yok sayıyoruz, `setId(0)` yapıyoruz. Böylece her POST'ta yeni kayıt oluşuyor." | `rest/CodeSnippetRestController.java:63` |
+| **PATCH nasıl çalışıyor?** | "Sadece gönderilen alanlar değişiyor. Gövdede `id` gönderilirse 400 dönüyoruz." | `service/CodeSnippetServiceImpl.java:96-103` (`updateValue`) |
+| **Hatalar nerede yakalanıyor?** | "Tek bir merkez sınıf bütün hataları aynı JSON formatına çeviriyor." | `rest/RefactorLabRestExceptionHandler.java:21` |
 | **Güvenlik?** | "HTTP Basic. Kullanıcılar ve roller MySQL'de duruyor." | `security/SecurityConfig.java:31` |
 | **Şifreler nasıl saklanıyor?** | "Argon2id ile şifrelenmiş halde. Düz metin şifre veritabanında yok." | `config/AppConfig.java:17` |
 | **401 / 403 ne demek?** | "401: kim olduğunu bilmiyorum (giriş yok/yanlış). 403: seni tanıyorum ama bu işe yetkin yok." | `security/RefactorLabSecurityErrorHandler.java` |

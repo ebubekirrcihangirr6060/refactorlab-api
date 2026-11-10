@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AnalysisServiceImpl implements AnalysisService {
@@ -53,11 +55,17 @@ public class AnalysisServiceImpl implements AnalysisService {
         AnalysisEngine theEngine = theIsQuery ? sqlEngine : defaultEngine;
         AnalysisResult theResult = theEngine.analyze(theSnippet.getSourceCode());
 
+        // Kurallar tek sorguyla okunur (koku başına ayrı sorgu = N+1 olurdu)
+        Map<String, RefactoringRule> theRulesBySmell = new HashMap<>();
+        for (RefactoringRule theRule : refactoringRuleDAO.findAll()) {
+            theRulesBySmell.put(theRule.getSmellName(), theRule);
+        }
+
         // Her koku için: önce DB'deki kurumsal kural, yoksa Fowler kataloğu
         List<String> theTechniques = new ArrayList<>();
         List<String> theHints = new ArrayList<>();
         for (String theSmell : theResult.getDetectedSmells().split(",\\s*")) {
-            RefactoringRule theRule = refactoringRuleDAO.findBySmellName(theSmell);
+            RefactoringRule theRule = theRulesBySmell.get(theSmell);
             String theTechnique = theRule != null ? theRule.getTechnique() : refactoringCatalog.getTechnique(theSmell);
             String theHint = refactoringCatalog.getHint(theSmell);
             if (theTechnique != null) {

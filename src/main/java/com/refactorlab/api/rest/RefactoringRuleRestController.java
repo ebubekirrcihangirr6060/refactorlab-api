@@ -3,6 +3,9 @@ package com.refactorlab.api.rest;
 import com.refactorlab.api.entity.RefactoringRule;
 import com.refactorlab.api.service.RefactoringRuleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -63,7 +66,11 @@ public class RefactoringRuleRestController {
 
     @Operation(summary = "Kuralı kısmen güncelle")
     @PatchMapping("/{ruleId}")
-    public RefactoringRule patchRule(@PathVariable int ruleId, @RequestBody Map<String, Object> thePatchPayload) {
+    public RefactoringRule patchRule(@PathVariable int ruleId,
+                                     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Sadece değişecek alanlar. id gönderilemez.",
+                                             content = @Content(schema = @Schema(implementation = RefactoringRule.class),
+                                                     examples = @ExampleObject(value = "{\"technique\": \"Extract Method\"}")))
+                                     @RequestBody Map<String, Object> thePatchPayload) {
         return refactoringRuleService.patch(ruleId, thePatchPayload);
     }
 

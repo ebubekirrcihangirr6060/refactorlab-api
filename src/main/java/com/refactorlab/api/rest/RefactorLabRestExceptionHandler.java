@@ -1,20 +1,27 @@
 package com.refactorlab.api.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import tools.jackson.core.JacksonException;
 
 import java.util.stream.Collectors;
 
 // Merkezi (global) hata yönetimi: tüm controller'lardaki hatalar burada JSON'a çevrilir
 @RestControllerAdvice
 public class RefactorLabRestExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(RefactorLabRestExceptionHandler.class);
 
     // 404 - kod parçası bulunamadı
     @ExceptionHandler
@@ -67,10 +74,29 @@ public class RefactorLabRestExceptionHandler {
         return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, exc.getMessage());
     }
 
-    // 400 - diğer tüm beklenmeyen hatalar (katalogdaki catch-all kalıbı)
+    // 400 - PATCH gövdesindeki bir alan entity'ye dönüştürülemedi (ör. "title": {})
+    @ExceptionHandler
+    public ResponseEntity<RefactorLabErrorResponse> handleException(JacksonException exc) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Invalid field value in request body");
+    }
+
+    // 400 - veritabanı kısıtı ihlali (ör. aynı smellName ile eşzamanlı ekleme)
+    @ExceptionHandler
+    public ResponseEntity<RefactorLabErrorResponse> handleException(DataIntegrityViolationException exc) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Request violates a database constraint");
+    }
+
+    // Diğer tüm hatalar (catch-all):
+    //  - Spring'in istemci hataları (415, 400 eksik parametre vb.) kendi durum koduyla döner
+    //  - gerçek sunucu hataları (DB kapalı, beklenmeyen hata) 500 döner, iç detay dışarı verilmez
     @ExceptionHandler
     public ResponseEntity<RefactorLabErrorResponse> handleException(Exception exc) {
-        return buildResponse(HttpStatus.BAD_REQUEST, exc.getMessage());
+        if (exc instanceof ErrorResponse theSpringError) {
+            HttpStatus theStatus = HttpStatus.valueOf(theSpringError.getStatusCode().value());
+            return buildResponse(theStatus, exc.getMessage());
+        }
+        logger.error("Unexpected server error", exc);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error - please try again later");
     }
 
     private ResponseEntity<RefactorLabErrorResponse> buildResponse(HttpStatus theStatus, String theMessage) {

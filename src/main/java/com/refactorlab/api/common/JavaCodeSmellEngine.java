@@ -21,7 +21,8 @@ public class JavaCodeSmellEngine implements AnalysisEngine {
     private static final Pattern MAGIC_NUMBER = Pattern.compile("[^\\w.](\\d{2,})[^\\w.]");
     private static final Pattern EMPTY_CATCH = Pattern.compile("catch\\s*\\([^)]*\\)\\s*\\{\\s*}");
     private static final Pattern LOOP = Pattern.compile("\\b(for|while)\\s*\\(");
-    private static final Pattern DB_CALL_IN_CODE = Pattern.compile("(?i)(find\\w*\\(|\\.get\\w+\\(\\)\\.size\\(|createQuery|executeQuery|repository\\.|dao\\.)");
+    // Veritabanı çağrısı işaretleri (stream'in findFirst/findAny metotları hariç)
+    private static final Pattern DB_CALL_IN_CODE = Pattern.compile("(?i)(\\bfind(?!First|Any)\\w*\\(|createQuery|executeQuery|repository\\.|dao\\.)");
 
     @Override
     public String getEngineName() {
@@ -39,7 +40,7 @@ public class JavaCodeSmellEngine implements AnalysisEngine {
         if (maxNestingDepth(theSourceCode) > 3) {
             theSmells.add("Deeply Nested Conditionals");
         }
-        if (countOccurrences(theSourceCode, "if (") + countOccurrences(theSourceCode, "if(") > 5
+        if (AnalysisEngine.countOccurrences(theSourceCode, "if (") + AnalysisEngine.countOccurrences(theSourceCode, "if(") > 5
                 || theSourceCode.contains("switch")) {
             theSmells.add("Complex Conditional");
         }
@@ -60,8 +61,9 @@ public class JavaCodeSmellEngine implements AnalysisEngine {
             theSmells.add("Duplicated Code");
         }
 
-        int theLoopDepth = maxLoopDepth(theSourceCode);
-        boolean theDbCallInLoop = theLoopDepth > 0 && DB_CALL_IN_CODE.matcher(theSourceCode).find();
+        Set<Integer> theLoopBraces = findLoopBodyBraces(theSourceCode);
+        int theLoopDepth = maxLoopDepth(theSourceCode, theLoopBraces);
+        boolean theDbCallInLoop = hasDbCallInsideLoop(theSourceCode, theLoopBraces);
         if (theDbCallInLoop) {
             theSmells.add("N+1 Query");
         }
@@ -72,16 +74,6 @@ public class JavaCodeSmellEngine implements AnalysisEngine {
         theResult.setComplexityBefore(theLoopDepth >= 2 ? "O(n^" + theLoopDepth + ")" : (theLoopDepth == 1 ? "O(n)" : "O(1)"));
         theResult.setComplexityAfter(theDbCallInLoop || theLoopDepth >= 2 ? "O(n)" : theResult.getComplexityBefore());
         return theResult;
-    }
-
-    private int countOccurrences(String theText, String theToken) {
-        int theCount = 0;
-        int theIndex = theText.indexOf(theToken);
-        while (theIndex != -1) {
-            theCount++;
-            theIndex = theText.indexOf(theToken, theIndex + theToken.length());
-        }
-        return theCount;
     }
 
     // Süslü parantez derinliğinin en fazla kaç olduğunu bulur (metot gövdesi 1 sayılır)
@@ -99,19 +91,58 @@ public class JavaCodeSmellEngine implements AnalysisEngine {
         return theMax - 1;
     }
 
+    // Döngü gövdelerinin açılış '{' konumlarını bulur.
+    // Sadece başlığın ')' karakterinden hemen sonra '{' gelen döngüler sayılır (süslü parantezsiz döngü başka bloğu kapmaz).
+    private Set<Integer> findLoopBodyBraces(String theSourceCode) {
+        Set<Integer> theLoopBraces = new HashSet<>();
+        Matcher theLoopMatcher = LOOP.matcher(theSourceCode);
+        while (theLoopMatcher.find()) {
+            int theClose = findMatching(theSourceCode, theLoopMatcher.end() - 1, '(', ')');
+            if (theClose == -1) {
+                continue;
+            }
+            int theNext = theClose + 1;
+            while (theNext < theSourceCode.length() && Character.isWhitespace(theSourceCode.charAt(theNext))) {
+                theNext++;
+            }
+            if (theNext < theSourceCode.length() && theSourceCode.charAt(theNext) == '{') {
+                theLoopBraces.add(theNext);
+            }
+        }
+        return theLoopBraces;
+    }
+
+    // N+1: veritabanı çağrısı bir döngü gövdesinin İÇİNDE mi?
+    private boolean hasDbCallInsideLoop(String theSourceCode, Set<Integer> theLoopBraces) {
+        for (int theOpen : theLoopBraces) {
+            int theClose = findMatching(theSourceCode, theOpen, '{', '}');
+            String theBody = theSourceCode.substring(theOpen, theClose == -1 ? theSourceCode.length() : theClose);
+            if (DB_CALL_IN_CODE.matcher(theBody).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // theOpenIndex'teki açılış karakterinin kapanışını bulur; yoksa -1
+    private int findMatching(String theText, int theOpenIndex, char theOpen, char theClose) {
+        int theDepth = 0;
+        for (int i = theOpenIndex; i < theText.length(); i++) {
+            char c = theText.charAt(i);
+            if (c == theOpen) {
+                theDepth++;
+            } else if (c == theClose && --theDepth == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     // İç içe döngü sayısını kabaca tahmin eder (Big-O tahmini için)
-    private int maxLoopDepth(String theSourceCode) {
+    private int maxLoopDepth(String theSourceCode, Set<Integer> theLoopBraces) {
         int theDepth = 0;
         int theMax = 0;
         List<Boolean> theStack = new ArrayList<>();
-        Matcher theLoopMatcher = LOOP.matcher(theSourceCode);
-        Set<Integer> theLoopBraces = new HashSet<>();
-        while (theLoopMatcher.find()) {
-            int theBrace = theSourceCode.indexOf('{', theLoopMatcher.end());
-            if (theBrace != -1) {
-                theLoopBraces.add(theBrace);
-            }
-        }
         for (int i = 0; i < theSourceCode.length(); i++) {
             char c = theSourceCode.charAt(i);
             if (c == '{') {

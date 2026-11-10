@@ -1,5 +1,6 @@
 package com.refactorlab.api.entity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,6 +21,7 @@ public class CodeSnippet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // MySQL AUTO_INCREMENT
     @Column(name = "id")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private int id;
 
     @NotBlank(message = "title is required")
@@ -45,9 +47,11 @@ public class CodeSnippet {
     private String bottleneckType;
 
     @Column(name = "owner_username", length = 50)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private String ownerUsername;
 
     @Column(name = "created_at")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
 
     // JPA için parametresiz constructor

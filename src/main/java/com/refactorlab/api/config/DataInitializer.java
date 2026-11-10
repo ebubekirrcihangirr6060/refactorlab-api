@@ -26,7 +26,7 @@ public class DataInitializer {
             theUserService.createUserIfMissing("developer", "test123", "ROLE_VIEWER", "ROLE_DEVELOPER");
             theUserService.createUserIfMissing("reviewer", "test123", "ROLE_VIEWER", "ROLE_DEVELOPER", "ROLE_REVIEWER");
 
-            // Örnek kurallar ve kod parçaları sadece tablo boşsa eklenir
+            // Örnek kurallar ve kod parçaları sadece kendi tabloları boşsa eklenir (tekrar eklenmez)
             if (theRuleDAO.count() == 0) {
                 theRuleService.save(new RefactoringRule("Long Method", "Bloaters", "Extract Method",
                         "Methods longer than ~30 lines should be split."));
@@ -36,7 +36,9 @@ public class DataInitializer {
                         "One query per loop item must be replaced with a single fetch join."));
                 theRuleService.save(new RefactoringRule("Select Star", "SQL", "Select Only Needed Columns",
                         "SELECT * reads unnecessary columns."));
+            }
 
+            if (theSnippetService.findAll().isEmpty()) {
                 theSnippetService.save(new CodeSnippet("Legacy order total",
                         "JAVA",
                         "public double total(List<Order> orders) {\n"

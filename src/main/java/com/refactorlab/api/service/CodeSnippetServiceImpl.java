@@ -17,15 +17,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class CodeSnippetServiceImpl implements CodeSnippetService {
 
-    // Kod içine gömülü istem enjeksiyonu (prompt injection) kalıpları
-    private static final List<String> PROMPT_INJECTION_PATTERNS = List.of(
-            "ignore previous instructions", "ignore all previous", "disregard the above",
-            "you are now", "system prompt", "act as");
+    // Kod içine gömülü istem enjeksiyonu (prompt injection) kalıpları; \b: "contact as" gibi normal kod yakalanmaz
+    private static final Pattern PROMPT_INJECTION = Pattern.compile(
+            "\\b(ignore (all )?previous instructions|disregard the above|you are now an? |system prompt|act as an? )\\b",
+            Pattern.CASE_INSENSITIVE);
 
     private final CodeSnippetDAO codeSnippetDAO;
     private final AnalysisResultDAO analysisResultDAO;
@@ -69,7 +71,6 @@ public class CodeSnippetServiceImpl implements CodeSnippetService {
     @Transactional
     public CodeSnippet save(CodeSnippet theSnippet, String theOwnerUsername) {
         validateSourceCode(theSnippet.getSourceCode());
-        theSnippet.setId(0);                       // istemci id gönderse bile yeni kayıt oluşur
         theSnippet.setOwnerUsername(theOwnerUsername);
         theSnippet.setCreatedAt(LocalDateTime.now());
         codeSnippetDAO.save(theSnippet);           // persist -> üretilen id nesneye yazılır
@@ -122,11 +123,9 @@ public class CodeSnippetServiceImpl implements CodeSnippetService {
         if (theSourceCode.length() > maxCodeLength) {
             throw new InvalidRequestException("sourceCode is too long - max " + maxCodeLength + " characters");
         }
-        String theLower = theSourceCode.toLowerCase(Locale.ROOT);
-        for (String thePattern : PROMPT_INJECTION_PATTERNS) {
-            if (theLower.contains(thePattern)) {
-                throw new InvalidRequestException("sourceCode contains a suspicious instruction: '" + thePattern + "'");
-            }
+        Matcher theMatcher = PROMPT_INJECTION.matcher(theSourceCode);
+        if (theMatcher.find()) {
+            throw new InvalidRequestException("sourceCode contains a suspicious instruction: '" + theMatcher.group().trim() + "'");
         }
     }
 

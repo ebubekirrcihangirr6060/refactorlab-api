@@ -5,6 +5,9 @@ import com.refactorlab.api.entity.CodeSnippet;
 import com.refactorlab.api.service.AnalysisService;
 import com.refactorlab.api.service.CodeSnippetService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -69,7 +72,11 @@ public class CodeSnippetRestController {
 
     @Operation(summary = "Kod parçasını kısmen güncelle (sadece gönderilen alanlar, id değiştirilemez)")
     @PatchMapping("/{snippetId}")
-    public CodeSnippet patchSnippet(@PathVariable int snippetId, @RequestBody Map<String, Object> thePatchPayload) {
+    public CodeSnippet patchSnippet(@PathVariable int snippetId,
+                                    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Sadece değişecek alanlar. id, ownerUsername, createdAt gönderilemez.",
+                                            content = @Content(schema = @Schema(implementation = CodeSnippet.class),
+                                                    examples = @ExampleObject(value = "{\"title\": \"Yeni başlık\", \"complexityLevel\": \"LOW\"}")))
+                                    @RequestBody Map<String, Object> thePatchPayload) {
         return codeSnippetService.patch(snippetId, thePatchPayload);
     }
 

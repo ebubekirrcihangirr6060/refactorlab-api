@@ -51,7 +51,6 @@ public class RefactoringRuleServiceImpl implements RefactoringRuleService {
     @Transactional
     public RefactoringRule save(RefactoringRule theRule) {
         checkSmellNameIsUnique(theRule.getSmellName(), 0);
-        theRule.setId(0);
         refactoringRuleDAO.save(theRule);
         return theRule;
     }

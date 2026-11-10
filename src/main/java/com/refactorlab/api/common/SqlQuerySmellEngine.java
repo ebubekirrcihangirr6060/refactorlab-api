@@ -15,7 +15,9 @@ import java.util.regex.Pattern;
 @Qualifier("sqlQueryEngine")
 public class SqlQuerySmellEngine implements AnalysisEngine {
 
-    private static final Pattern FUNCTION_ON_COLUMN = Pattern.compile("WHERE\\s+.*\\b(UPPER|LOWER|YEAR|MONTH|DATE|SUBSTRING|CAST)\\s*\\(");
+    // Sadece WHERE koşulunun içine bakar (ORDER BY / GROUP BY / HAVING / LIMIT öncesinde durur)
+    private static final Pattern FUNCTION_ON_COLUMN = Pattern.compile(
+            "\\bWHERE\\b(?:(?!\\b(?:ORDER BY|GROUP BY|HAVING|LIMIT)\\b).)*?\\b(UPPER|LOWER|YEAR|MONTH|DATE|SUBSTRING|CAST)\\s*\\(");
     private static final Pattern MUTATION_WITHOUT_WHERE = Pattern.compile("^\\s*(UPDATE|DELETE)\\b(?!.*\\bWHERE\\b).*", Pattern.DOTALL);
 
     @Override
@@ -43,10 +45,10 @@ public class SqlQuerySmellEngine implements AnalysisEngine {
         if (MUTATION_WITHOUT_WHERE.matcher(theSql).matches()) {
             theSmells.add("Unbounded Update Or Delete");
         }
-        if (countOccurrences(theSql, " JOIN ") > 3) {
+        if (AnalysisEngine.countOccurrences(theSql, " JOIN ") > 3) {
             theSmells.add("Too Many Joins");
         }
-        if (countOccurrences(theSql, " OR ") > 3) {
+        if (AnalysisEngine.countOccurrences(theSql, " OR ") > 3) {
             theSmells.add("Or Chain");
         }
         if (theSql.contains("SELECT") && !theSql.contains("WHERE") && !theSql.contains("LIMIT")) {
@@ -63,15 +65,5 @@ public class SqlQuerySmellEngine implements AnalysisEngine {
         theResult.setComplexityBefore(theHasSubquery ? "O(n*m)" : (theFullScan ? "O(n) full scan" : "O(log n)"));
         theResult.setComplexityAfter(theHasSubquery || theFullScan ? "O(log n) index" : theResult.getComplexityBefore());
         return theResult;
-    }
-
-    private int countOccurrences(String theText, String theToken) {
-        int theCount = 0;
-        int theIndex = theText.indexOf(theToken);
-        while (theIndex != -1) {
-            theCount++;
-            theIndex = theText.indexOf(theToken, theIndex + theToken.length());
-        }
-        return theCount;
     }
 }
